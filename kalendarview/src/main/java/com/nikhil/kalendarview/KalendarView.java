@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.Typeface;
+import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -33,8 +34,10 @@ public class KalendarView extends LinearLayout {
     // default date format
     private static final String DATE_FORMAT = "MMM yyyy";
 
-    // date format
+    // attrs
     private String dateFormat;
+    private boolean allowHighlight;
+    private int highLightResource;
 
     // current displayed month
     private Calendar currentDate = Calendar.getInstance();
@@ -85,22 +88,27 @@ public class KalendarView extends LinearLayout {
         LayoutInflater inflater = (LayoutInflater) context.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         inflater.inflate(R.layout.kalendar, this);
 
+        eventDays = new HashSet<>();
         currentMonthCalendar.setTime(new Date(System.currentTimeMillis()));
-        loadDateFormat(attrs);
+        loadDateAttrs(attrs);
         assignUiElements();
         assignClickHandlers();
 
         updateCalendar();
     }
 
-    private void loadDateFormat(AttributeSet attrs) {
+    private void loadDateAttrs(AttributeSet attrs) {
         TypedArray ta = getContext().obtainStyledAttributes(attrs, R.styleable.KalendarView);
-
         try {
             // try to load provided date format, and fallback to default otherwise
             dateFormat = ta.getString(R.styleable.KalendarView_dateFormat);
             if (dateFormat == null)
                 dateFormat = DATE_FORMAT;
+
+            allowHighlight = ta.getBoolean(R.styleable.KalendarView_allowHighlight, false);
+
+            highLightResource = ta.getResourceId(R.styleable.KalendarView_setHighlightDrawable, R.drawable.border_circular);
+
         } finally {
             ta.recycle();
         }
@@ -155,9 +163,50 @@ public class KalendarView extends LinearLayout {
                 if (eventHandler == null)
                     return;
 
-                eventHandler.onDayClicked((Date) parent.getItemAtPosition(position));
+                Date date = (Date) parent.getItemAtPosition(position);
+                eventHandler.onDayClicked(date);
+
+                if (allowHighlight) {
+                    if (eventDays.contains(date)) {
+                        eventDays.remove(date);
+                    } else {
+                        eventDays.add(date);
+                    }
+                    updateCalendar();
+                }
+
             }
         });
+    }
+
+    /**
+     * getters for setters for attrs */
+    public String getDateFormat() {
+        return dateFormat;
+    }
+
+    public void setDateFormat(String dateFormat) {
+        this.dateFormat = dateFormat;
+    }
+
+    public boolean isAllowHighlight() {
+        return allowHighlight;
+    }
+
+    public void setAllowHighlight(boolean allowHighlight) {
+        this.allowHighlight = allowHighlight;
+    }
+
+    public int getHighLightResource() {
+        return highLightResource;
+    }
+
+    public void setHighLightResource(int highLightResource) {
+        this.highLightResource = highLightResource;
+    }
+
+    public HashSet<Date> getEventDays() {
+        return eventDays;
     }
 
     /**
@@ -202,7 +251,6 @@ public class KalendarView extends LinearLayout {
         // header.setBackgroundColor(ContextCompat.getColor(getContext(), color));
     }
 
-
     private class CalendarAdapter extends ArrayAdapter<Date> {
         // days with events
         //private HashSet<Date> eventDays;
@@ -236,6 +284,10 @@ public class KalendarView extends LinearLayout {
             if (view == null)
                 view = inflater.inflate(R.layout.kalendar_day, parent, false);
 
+            // default styling
+            ((TextView) view).setTypeface(null, Typeface.NORMAL);
+            ((TextView) view).setTextColor(Color.BLACK);
+
             // if this day has an event, specify event image
             view.setBackgroundResource(0);
             if (eventDays != null) {
@@ -246,15 +298,12 @@ public class KalendarView extends LinearLayout {
                             c.get(Calendar.MONTH) == month &&
                             c.get(Calendar.YEAR) == year) {
                         // mark this day for event
-                        view.setBackgroundResource(R.drawable.border_circular);
+                        ((TextView) view).setTextColor(Color.WHITE);
+                        view.setBackgroundResource(highLightResource);
                         break;
                     }
                 }
             }
-
-            // clear styling
-            ((TextView) view).setTypeface(null, Typeface.NORMAL);
-            ((TextView) view).setTextColor(Color.BLACK);
 
             // today
             //Calendar today = currentDate;

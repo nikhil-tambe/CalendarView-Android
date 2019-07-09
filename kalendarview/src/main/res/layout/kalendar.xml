@@ -117,5 +117,10 @@
         android:id="@+id/calendar_grid"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:verticalSpacing="2dp"
+        android:horizontalSpacing="2dp"
+        android:layout_gravity="center_vertical"
+        android:gravity="center"
         android:numColumns="7"/>
+
 </LinearLayout>

@@ -2,5 +2,7 @@
 <resources>
     <declare-styleable name="KalendarView">
         <attr name="dateFormat" format="string"/>
+        <attr name="allowHighlight" format="boolean"/>
+        <attr name="setHighlightDrawable" format="reference"/>
     </declare-styleable>
 </resources>
